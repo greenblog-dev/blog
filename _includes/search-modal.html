@@ -1,0 +1,573 @@
+<!-- _includes/search-modal.html -->
+<dialog id="search-modal" class="search-dialog" aria-labelledby="search-title">
+  <div class="search-container">
+    <!-- Header Search -->
+    <div class="search-header">
+      <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" fill="currentColor">
+        <path d="M0 0h24v24H0V0z" fill="none"/>
+        <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+      </svg>
+      <input 
+        type="search" 
+        id="search-input" 
+        class="search-input" 
+        placeholder="Cari artikel, kegiatan, atau pengumuman..." 
+        autocomplete="off"
+        aria-label="Pencarian"
+        aria-controls="search-results">
+      <button id="search-close" class="search-close-btn" aria-label="Tutup pencarian">
+        <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" fill="currentColor">
+          <path d="M0 0h24v24H0V0z" fill="none"/>
+          <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Filter Chips (Kategori) -->
+    <div class="search-filters" id="search-filters">
+      <button class="filter-chip active" data-filter="all">Semua</button>
+      <button class="filter-chip" data-filter="berita">Berita</button>
+      <button class="filter-chip" data-filter="kegiatan">Kegiatan</button>
+      <button class="filter-chip" data-filter="pengumuman">Pengumuman</button>
+    </div>
+
+    <!-- Results Area -->
+    <div id="search-results" class="search-results" role="listbox" aria-label="Hasil pencarian">
+      <div class="search-loading">
+        <div class="search-spinner"></div>
+        <p>Memuat data pencarian...</p>
+      </div>
+    </div>
+
+    <!-- Footer Info -->
+    <div class="search-footer">
+      <span class="search-hint">
+        <kbd>↑</kbd><kbd>↓</kbd> Navigasi &nbsp; <kbd>↵</kbd> Buka &nbsp; <kbd>Esc</kbd> Tutup
+      </span>
+      <span id="search-count" class="search-count"></span>
+    </div>
+  </div>
+</dialog>
+
+<!-- Trigger Button (Hidden, akan dipanggil dari navbar) -->
+<button id="search-trigger" class="search-trigger-btn" aria-label="Buka pencarian" aria-haspopup="dialog">
+  <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" fill="currentColor">
+    <path d="M0 0h24v24H0V0z" fill="none"/>
+    <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+  </svg>
+  <span class="search-trigger-text">Cari...</span>
+  <kbd class="search-trigger-kbd">Ctrl+K</kbd>
+</button>
+
+<style>
+  /* ===== Search Dialog (MD3) ===== */
+  .search-dialog {
+    border: none;
+    border-radius: var(--md-shape-corner-xl);
+    padding: 0;
+    width: min(640px, 92vw);
+    max-height: 85vh;
+    background: var(--md-surface);
+    color: var(--md-on-surface);
+    box-shadow: 0 11px 15px -7px rgba(0,0,0,.2), 0 24px 38px 3px rgba(0,0,0,.14);
+    overflow: hidden;
+  }
+  .search-dialog::backdrop {
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+  }
+  .search-dialog[open] {
+    animation: dialogIn 0.2s ease-out;
+  }
+  @keyframes dialogIn {
+    from { opacity: 0; transform: scale(0.95) translateY(10px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+
+  .search-container {
+    display: flex;
+    flex-direction: column;
+    max-height: 85vh;
+  }
+
+  /* Header */
+  .search-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--md-outline);
+    background: var(--md-surface);
+  }
+  .search-icon {
+    color: var(--md-primary);
+    flex-shrink: 0;
+  }
+  .search-input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    font-size: 1.05rem;
+    color: var(--md-on-surface);
+    outline: none;
+    font-family: inherit;
+  }
+  .search-input::placeholder {
+    color: var(--md-outline);
+  }
+  .search-close-btn {
+    background: transparent;
+    border: none;
+    color: var(--md-on-surface);
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    transition: background 0.2s;
+  }
+  .search-close-btn:hover {
+    background: var(--md-surface-variant);
+  }
+
+  /* Filter Chips */
+  .search-filters {
+    display: flex;
+    gap: 8px;
+    padding: 12px 20px;
+    overflow-x: auto;
+    border-bottom: 1px solid var(--md-outline);
+    scrollbar-width: none;
+  }
+  .search-filters::-webkit-scrollbar { display: none; }
+  .filter-chip {
+    padding: 6px 16px;
+    border-radius: 8px;
+    border: 1px solid var(--md-outline);
+    background: transparent;
+    color: var(--md-on-surface);
+    font-size: 0.875rem;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+    font-family: inherit;
+  }
+  .filter-chip:hover {
+    background: var(--md-surface-variant);
+  }
+  .filter-chip.active {
+    background: var(--md-primary);
+    color: var(--md-on-primary);
+    border-color: var(--md-primary);
+  }
+
+  /* Results */
+  .search-results {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px;
+    min-height: 200px;
+    max-height: 50vh;
+  }
+  .search-result-item {
+    display: block;
+    padding: 14px 16px;
+    border-radius: var(--md-shape-corner-m);
+    color: var(--md-on-surface);
+    text-decoration: none;
+    transition: background 0.15s;
+    cursor: pointer;
+  }
+  .search-result-item:hover,
+  .search-result-item:focus,
+  .search-result-item.focused {
+    background: var(--md-surface-variant);
+    outline: none;
+  }
+  .search-result-title {
+    font-weight: 600;
+    font-size: 1rem;
+    margin-bottom: 4px;
+    color: var(--md-on-surface);
+  }
+  .search-result-meta {
+    display: flex;
+    gap: 8px;
+    font-size: 0.75rem;
+    color: var(--md-outline);
+    margin-bottom: 6px;
+    flex-wrap: wrap;
+  }
+  .search-result-meta span {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .search-result-excerpt {
+    font-size: 0.875rem;
+    color: var(--md-on-surface);
+    opacity: 0.8;
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .search-result-excerpt mark {
+    background: linear-gradient(120deg, var(--md-tertiary) 0%, var(--md-secondary) 100%);
+    color: white;
+    padding: 0 4px;
+    border-radius: 3px;
+    font-weight: 500;
+  }
+
+  /* States */
+  .search-loading,
+  .search-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 20px;
+    text-align: center;
+    color: var(--md-outline);
+  }
+  .search-spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid var(--md-surface-variant);
+    border-top-color: var(--md-primary);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-bottom: 12px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .search-empty-icon {
+    font-size: 3rem;
+    margin-bottom: 12px;
+    opacity: 0.5;
+  }
+
+  /* Footer */
+  .search-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 20px;
+    border-top: 1px solid var(--md-outline);
+    font-size: 0.8rem;
+    color: var(--md-outline);
+    background: var(--md-surface);
+  }
+  .search-hint kbd {
+    display: inline-block;
+    padding: 2px 6px;
+    margin: 0 2px;
+    font-size: 0.7rem;
+    font-family: monospace;
+    background: var(--md-surface-variant);
+    border-radius: 4px;
+    border: 1px solid var(--md-outline);
+  }
+  .search-count {
+    font-weight: 500;
+    color: var(--md-primary);
+  }
+
+  /* Trigger Button (Navbar) */
+  .search-trigger-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: var(--md-shape-corner-xl);
+    border: 1px solid var(--md-outline);
+    background: var(--md-surface);
+    color: var(--md-on-surface);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+  }
+  .search-trigger-btn:hover {
+    background: var(--md-surface-variant);
+    border-color: var(--md-primary);
+  }
+  .search-trigger-text {
+    color: var(--md-outline);
+  }
+  .search-trigger-kbd {
+    padding: 2px 6px;
+    font-size: 0.7rem;
+    font-family: monospace;
+    background: var(--md-surface-variant);
+    border-radius: 4px;
+    border: 1px solid var(--md-outline);
+    color: var(--md-outline);
+  }
+
+  /* Mobile Responsive */
+  @media (max-width: 600px) {
+    .search-dialog {
+      width: 100vw;
+      max-height: 100vh;
+      height: 100vh;
+      border-radius: 0;
+    }
+    .search-trigger-text,
+    .search-trigger-kbd {
+      display: none;
+    }
+    .search-trigger-btn {
+      padding: 8px;
+    }
+  }
+</style>
+
+<script>
+(function() {
+  'use strict';
+
+  const modal = document.getElementById('search-modal');
+  const trigger = document.getElementById('search-trigger');
+  const closeBtn = document.getElementById('search-close');
+  const input = document.getElementById('search-input');
+  const resultsContainer = document.getElementById('search-results');
+  const countEl = document.getElementById('search-count');
+  const filterChips = document.querySelectorAll('.filter-chip');
+
+  let searchData = null;
+  let currentFilter = 'all';
+  let focusedIndex = -1;
+  let debounceTimer = null;
+
+  // ===== Fetch Search Data (Cached) =====
+  async function loadSearchData() {
+    if (searchData) return searchData;
+    try {
+      const res = await fetch('{{ "/search.json" | relative_url }}');
+      searchData = await res.json();
+      return searchData;
+    } catch (err) {
+      console.error('Search data load error:', err);
+      return [];
+    }
+  }
+
+  // ===== Open Modal =====
+  function openModal() {
+    modal.showModal();
+    input.value = '';
+    input.focus();
+    loadSearchData().then(() => {
+      renderResults('');
+    });
+  }
+
+  // ===== Close Modal =====
+  function closeModal() {
+    modal.close();
+    focusedIndex = -1;
+  }
+
+  // ===== Escape HTML =====
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  // ===== Highlight Match =====
+  function highlightText(text, query) {
+    if (!query) return escapeHtml(text);
+    const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(`(${escaped})`, 'gi');
+    return escapeHtml(text).replace(regex, '<mark>$1</mark>');
+  }
+
+  // ===== Get Excerpt Around Match =====
+  function getExcerpt(content, query, maxLen = 140) {
+    if (!query) return escapeHtml(content.substring(0, maxLen)) + '...';
+    const lowerContent = content.toLowerCase();
+    const lowerQuery = query.toLowerCase();
+    const idx = lowerContent.indexOf(lowerQuery);
+    
+    if (idx === -1) return escapeHtml(content.substring(0, maxLen)) + '...';
+    
+    const start = Math.max(0, idx - 50);
+    const end = Math.min(content.length, idx + query.length + 90);
+    let excerpt = content.substring(start, end);
+    
+    if (start > 0) excerpt = '...' + excerpt;
+    if (end < content.length) excerpt = excerpt + '...';
+    
+    return highlightText(excerpt, query);
+  }
+
+  // ===== Render Results =====
+  function renderResults(query) {
+    if (!searchData) {
+      resultsContainer.innerHTML = `
+        <div class="search-loading">
+          <div class="search-spinner"></div>
+          <p>Memuat data...</p>
+        </div>`;
+      return;
+    }
+
+    const q = query.trim().toLowerCase();
+    
+    let filtered = searchData.filter(item => {
+      // Filter by category chip
+      if (currentFilter !== 'all') {
+        const cats = (item.category || '').toLowerCase();
+        const tags = (item.tags || '').toLowerCase();
+        if (!cats.includes(currentFilter) && !tags.includes(currentFilter)) {
+          return false;
+        }
+      }
+      
+      // Filter by query
+      if (!q) return true;
+      return (item.title || '').toLowerCase().includes(q) ||
+             (item.content || '').toLowerCase().includes(q) ||
+             (item.tags || '').toLowerCase().includes(q) ||
+             (item.category || '').toLowerCase().includes(q);
+    });
+
+    // Limit results for performance
+    const limited = filtered.slice(0, 15);
+    focusedIndex = -1;
+
+    if (q && filtered.length === 0) {
+      resultsContainer.innerHTML = `
+        <div class="search-empty">
+          <div class="search-empty-icon">🔍</div>
+          <p><strong>Tidak ditemukan</strong></p>
+          <p style="font-size: 0.875rem; margin-top: 4px;">Coba kata kunci lain atau ubah filter kategori.</p>
+        </div>`;
+      countEl.textContent = '0 hasil';
+      return;
+    }
+
+    if (limited.length === 0) {
+      resultsContainer.innerHTML = `
+        <div class="search-empty">
+          <div class="search-empty-icon">✨</div>
+          <p>Ketik untuk mulai mencari</p>
+        </div>`;
+      countEl.textContent = '';
+      return;
+    }
+
+    const html = limited.map((item, i) => {
+      const date = new Date(item.date).toLocaleDateString('id-ID', { 
+        day: 'numeric', month: 'short', year: 'numeric' 
+      });
+      const category = item.category ? item.category.split(',')[0].trim() : '';
+      
+      return `
+        <a href="${item.url}" class="search-result-item" role="option" data-index="${i}">
+          <div class="search-result-title">${highlightText(item.title || 'Tanpa Judul', q)}</div>
+          <div class="search-result-meta">
+            ${category ? `<span>📁 ${escapeHtml(category)}</span>` : ''}
+            <span>📅 ${date}</span>
+          </div>
+          <div class="search-result-excerpt">${getExcerpt(item.content || '', q)}</div>
+        </a>`;
+    }).join('');
+
+    resultsContainer.innerHTML = html;
+    countEl.textContent = `${filtered.length} hasil${filtered.length > 15 ? ' (menampilkan 15)' : ''}`;
+  }
+
+  // ===== Keyboard Navigation =====
+  function updateFocus() {
+    const items = resultsContainer.querySelectorAll('.search-result-item');
+    items.forEach((item, i) => {
+      item.classList.toggle('focused', i === focusedIndex);
+    });
+    if (focusedIndex >= 0 && items[focusedIndex]) {
+      items[focusedIndex].scrollIntoView({ block: 'nearest' });
+    }
+  }
+
+  // ===== Event Listeners =====
+  trigger.addEventListener('click', openModal);
+  closeBtn.addEventListener('click', closeModal);
+
+  // Click outside to close
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) closeModal();
+  });
+
+  // Search input with debounce
+  input.addEventListener('input', (e) => {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+      renderResults(e.target.value);
+    }, 150);
+  });
+
+  // Keyboard shortcuts
+  document.addEventListener('keydown', (e) => {
+    // Ctrl+K or Cmd+K to open
+    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+      e.preventDefault();
+      if (modal.open) {
+        closeModal();
+      } else {
+        openModal();
+      }
+    }
+
+    // Only handle keys when modal is open
+    if (!modal.open) return;
+
+    const items = resultsContainer.querySelectorAll('.search-result-item');
+    const maxIndex = items.length - 1;
+
+    switch(e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        focusedIndex = focusedIndex < maxIndex ? focusedIndex + 1 : 0;
+        updateFocus();
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        focusedIndex = focusedIndex > 0 ? focusedIndex - 1 : maxIndex;
+        updateFocus();
+        break;
+      case 'Enter':
+        if (focusedIndex >= 0 && items[focusedIndex]) {
+          e.preventDefault();
+          window.location.href = items[focusedIndex].getAttribute('href');
+        }
+        break;
+      case 'Escape':
+        closeModal();
+        break;
+    }
+  });
+
+  // Filter chips
+  filterChips.forEach(chip => {
+    chip.addEventListener('click', () => {
+      filterChips.forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      currentFilter = chip.dataset.filter;
+      renderResults(input.value);
+    });
+  });
+
+  // Click on result
+  resultsContainer.addEventListener('click', (e) => {
+    const item = e.target.closest('.search-result-item');
+    if (item) {
+      // Let default link behavior handle navigation
+    }
+  });
+})();
+</script>
